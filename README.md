@@ -1,7 +1,7 @@
 # tflow2
 
 
-[![Build Status](https://travis-ci.org/taktv6/tflow2.svg?branch=master)](https://travis-ci.org/taktv6/tflow2)
+[![Build Status](https://circleci.com/gh/bio-routing/tflow2.svg?branch=master)](https://circleci.com/gh/bio-routing/tflow2)
 [![Coverage Status](https://coveralls.io/repos/taktv6/tflow2/badge.svg?branch=master&service=github)](https://coveralls.io/github/taktv6/tflow2?branch=master)
 [![Go ReportCard](http://goreportcard.com/badge/taktv6/tflow2)](http://goreportcard.com/report/taktv6/tflow2)
 
