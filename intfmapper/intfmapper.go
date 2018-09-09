@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/taktv6/tflow2/config"
+	"github.com/bio-routing/tflow2/config"
 
 	g "github.com/soniah/gosnmp"
 )
