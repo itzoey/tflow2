@@ -5,16 +5,33 @@ version: 2
 jobs:
   build:
     docker:
-      # specify the version
-      - image: circleci/golang:1.10
-
-    working_directory: /go/src/github.com/taktv6/tflow2
+      - image: circleci/golang:1.11
     steps:
       - checkout
-      - run: curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-      - run: dep ensure -v
 
-      - run: go get github.com/mattn/goveralls
-      - run: go test -v -cover -race -coverprofile=coverage.out ./...
-      - run: goveralls -coverprofile=coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN
-      - run: go install github.com/taktv6/tflow2
+      # run tests and report coverage
+      - run: go test -v -cover -race -coverprofile=coverage.txt ./...
+      - run: bash <(curl -s https://codecov.io/bash)
+
+      # build binary
+      - run: go install github.com/bio-routing/tflow2
+
+  checks:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - checkout
+
+      # check goftm
+      - run: .circleci/check-gofmt
+
+      # check misspell
+      - run: go get github.com/client9/misspell/cmd/misspell
+      - run: misspell -error .
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - checks
+    - build

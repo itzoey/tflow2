@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/bio-routing/tflow2/config"
-
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	g "github.com/soniah/gosnmp"
 )
 
@@ -50,7 +50,7 @@ func New(agents []config.Agent, renewInterval int64) (*Mapper, error) {
 	for _, agent := range m.agents {
 		m.interfaceIDByNameByAgent[agent.Name] = make(InterfaceIDByName)
 		if err := m.renewMapping(agent); err != nil {
-			return nil, fmt.Errorf("Unable to get interface mapping for %s: %v", agent.Name, err)
+			return nil, errors.Wrapf(err, "Unable to get interface mapping for %s", agent.Name)
 		}
 	}
 
@@ -66,7 +66,7 @@ func (m *Mapper) startRenewWorkers() {
 				time.Sleep(time.Second * time.Duration(m.renewInterval))
 				err := m.renewMapping(agent)
 				if err != nil {
-					glog.Infof("Unable to renew interface mapping for %s: %v", agent.Name, err)
+					log.Infof("Unable to renew interface mapping for %s: %v", agent.Name, err)
 				}
 			}
 		}(agent)

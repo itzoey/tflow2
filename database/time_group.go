@@ -3,11 +3,12 @@ package database
 import (
 	"net"
 
-	"github.com/golang/glog"
 	"github.com/bio-routing/tflow2/avltree"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/bio-routing/tflow2/iana"
 	"github.com/bio-routing/tflow2/intfmapper"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // TimeGroup groups all indices to flows of a particular router at a particular
@@ -81,7 +82,7 @@ func (tg *TimeGroup) filterAndBreakdown(resSum *concurrentResSum, q *Query, iana
 	// Find common elements of candidate trees
 	res := avltree.Intersection(candidates)
 	if res == nil {
-		glog.Warningf("Intersection result was empty!")
+		log.Warningf("Intersection result was empty!")
 	}
 
 	// Breakdown

@@ -16,8 +16,10 @@ import (
 	"net"
 	"unsafe"
 
-	"github.com/golang/glog"
 	"github.com/bio-routing/tflow2/convert"
+	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -89,7 +91,7 @@ func Decode(raw []byte, remote net.IP) (*Packet, error) {
 
 	flowSamples, err := decodeFlows(headerBottomPtr, h.NumSamples)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to dissect flows: %v", err)
+		return nil, errors.Wrap(err, "Unable to dissect flows")
 	}
 	p.FlowSamples = flowSamples
 
@@ -115,7 +117,7 @@ func decodeFlows(samplesPtr unsafe.Pointer, NumSamples uint32) ([]*FlowSample, e
 		if sfTypeFormat == dataFlowSample {
 			fs, err := decodeFlowSample(samplesPtr)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to decode flow sample: %v", err)
+				return nil, errors.Wrap(err, "Unable to decode flow sample")
 			}
 			flowSamples = append(flowSamples, fs)
 		}
@@ -148,13 +150,13 @@ func decodeFlowSample(flowSamplePtr unsafe.Pointer) (*FlowSample, error) {
 			case extendedRouterData:
 				erd, err = decodeExtendRouterData(flowSamplePtr)
 				if err != nil {
-					return nil, fmt.Errorf("Unable to decide extended router data: %v", err)
+					return nil, errors.Wrap(err, "Unable to decide extended router data")
 				}
 
 			case extendedSwitchData:
 
 			default:
-				glog.Infof("Unknown sfTypeFormat\n")
+				log.Infof("Unknown sfTypeFormat\n")
 			}
 
 		}

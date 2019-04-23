@@ -14,6 +14,7 @@ package main
 
 import (
 	"flag"
+	"os"
 	"runtime"
 	"sync"
 
@@ -29,7 +30,8 @@ import (
 	"github.com/bio-routing/tflow2/sfserver"
 	"github.com/bio-routing/tflow2/srcache"
 	"github.com/bio-routing/tflow2/stats"
-	"github.com/golang/glog"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -48,7 +50,8 @@ func main() {
 
 	cfg, err := config.New(*configFile)
 	if err != nil {
-		glog.Exitf("Unable to get configuration: %v", err)
+		log.Errorf("Unable to get configuration: %v", err)
+		os.Exit(1)
 	}
 
 	// Initialize statistics module
@@ -56,7 +59,8 @@ func main() {
 
 	inftMapper, err := intfmapper.New(cfg.Agents, cfg.AggregationPeriod)
 	if err != nil {
-		glog.Exitf("Unable to initialize interface mappper: %v", err)
+		log.Errorf("Unable to initialize interface mappper: %v", err)
+		os.Exit(1)
 	}
 
 	chans := make([]chan *netflow.Flow, 0)

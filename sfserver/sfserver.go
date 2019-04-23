@@ -21,7 +21,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/golang/glog"
 	"github.com/bio-routing/tflow2/config"
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/bio-routing/tflow2/netflow"
@@ -29,6 +28,9 @@ import (
 	"github.com/bio-routing/tflow2/sflow"
 	"github.com/bio-routing/tflow2/srcache"
 	"github.com/bio-routing/tflow2/stats"
+	"github.com/pkg/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // SflowServer represents a sflow Collector instance
@@ -96,7 +98,7 @@ func (sfs *SflowServer) packetWorker(identity int, conn *net.UDPConn) {
 			break
 		}
 		if err != nil {
-			glog.Errorf("Error reading from socket: %v", err)
+			log.Errorf("Error reading from socket: %v", err)
 			continue
 		}
 		atomic.AddUint64(&stats.GlobalStats.SflowPackets, 1)
@@ -104,7 +106,7 @@ func (sfs *SflowServer) packetWorker(identity int, conn *net.UDPConn) {
 
 		remote.IP = remote.IP.To4()
 		if remote.IP == nil {
-			glog.Errorf("Received IPv6 packet. Dropped.")
+			log.Errorf("Received IPv6 packet. Dropped.")
 			continue
 		}
 
@@ -118,29 +120,29 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 	length := len(buffer)
 	p, err := sflow.Decode(buffer[:length], agent)
 	if err != nil {
-		glog.Errorf("sflow.Decode: %v", err)
+		log.Errorf("sflow.Decode: %v", err)
 		return
 	}
 
 	for _, fs := range p.FlowSamples {
 		if fs.RawPacketHeader == nil {
-			glog.Infof("Received sflow packet without raw packet header. Skipped.")
+			log.Infof("Received sflow packet without raw packet header. Skipped.")
 			continue
 		}
 
 		if fs.RawPacketHeaderData == nil {
-			glog.Infof("Received sflow packet without raw packet header. Skipped.")
+			log.Infof("Received sflow packet without raw packet header. Skipped.")
 			continue
 		}
 
 		if fs.RawPacketHeader.HeaderProtocol != 1 {
-			glog.Infof("Unknown header protocol: %d", fs.RawPacketHeader.HeaderProtocol)
+			log.Infof("Unknown header protocol: %d", fs.RawPacketHeader.HeaderProtocol)
 			continue
 		}
 
 		ether, err := packet.DecodeEthernet(fs.RawPacketHeaderData, fs.RawPacketHeader.OriginalPacketLength)
 		if err != nil {
-			glog.Infof("Unable to decode ether packet: %v", err)
+			log.Infof("Unable to decode ether packet: %v", err)
 			continue
 		}
 
@@ -166,7 +168,7 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 			ipv4Ptr := unsafe.Pointer(uintptr(fs.RawPacketHeaderData) - packet.SizeOfEthernetII)
 			ipv4, err := packet.DecodeIPv4(ipv4Ptr, fs.RawPacketHeader.OriginalPacketLength-uint32(packet.SizeOfEthernetII))
 			if err != nil {
-				glog.Errorf("Unable to decode IPv4 packet: %v", err)
+				log.Errorf("Unable to decode IPv4 packet: %v", err)
 			}
 
 			fl.SrcAddr = convert.Reverse(ipv4.SrcAddr[:])
@@ -177,13 +179,13 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 				tcpPtr := unsafe.Pointer(uintptr(ipv4Ptr) - packet.SizeOfIPv4Header)
 				len := fs.RawPacketHeader.OriginalPacketLength - uint32(packet.SizeOfEthernetII) - uint32(packet.SizeOfIPv4Header)
 				if err := getTCP(tcpPtr, len, fl); err != nil {
-					glog.Errorf("%v", err)
+					log.Errorf("%v", err)
 				}
 			case packet.UDP:
 				udpPtr := unsafe.Pointer(uintptr(ipv4Ptr) - packet.SizeOfIPv4Header)
 				len := fs.RawPacketHeader.OriginalPacketLength - uint32(packet.SizeOfEthernetII) - uint32(packet.SizeOfIPv4Header)
 				if err := getUDP(udpPtr, len, fl); err != nil {
-					glog.Errorf("%v", err)
+					log.Errorf("%v", err)
 				}
 			}
 		} else if ether.EtherType == packet.EtherTypeIPv6 {
@@ -191,7 +193,7 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 			ipv6Ptr := unsafe.Pointer(uintptr(fs.RawPacketHeaderData) - packet.SizeOfEthernetII)
 			ipv6, err := packet.DecodeIPv6(ipv6Ptr, fs.RawPacketHeader.OriginalPacketLength-uint32(packet.SizeOfEthernetII))
 			if err != nil {
-				glog.Errorf("Unable to decode IPv6 packet: %v", err)
+				log.Errorf("Unable to decode IPv6 packet: %v", err)
 			}
 
 			fl.SrcAddr = convert.Reverse(ipv6.SrcAddr[:])
@@ -202,19 +204,19 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 				tcpPtr := unsafe.Pointer(uintptr(ipv6Ptr) - packet.SizeOfIPv6Header)
 				len := fs.RawPacketHeader.OriginalPacketLength - uint32(packet.SizeOfEthernetII) - uint32(packet.SizeOfIPv6Header)
 				if err := getTCP(tcpPtr, len, fl); err != nil {
-					glog.Errorf("%v", err)
+					log.Errorf("%v", err)
 				}
 			case packet.UDP:
 				udpPtr := unsafe.Pointer(uintptr(ipv6Ptr) - packet.SizeOfIPv6Header)
 				len := fs.RawPacketHeader.OriginalPacketLength - uint32(packet.SizeOfEthernetII) - uint32(packet.SizeOfIPv6Header)
 				if err := getUDP(udpPtr, len, fl); err != nil {
-					glog.Errorf("%v", err)
+					log.Errorf("%v", err)
 				}
 			}
 		} else if ether.EtherType == packet.EtherTypeARP || ether.EtherType == packet.EtherTypeLACP {
 			continue
 		} else {
-			glog.Errorf("Unknown EtherType: 0x%x", ether.EtherType)
+			log.Errorf("Unknown EtherType: 0x%x", ether.EtherType)
 		}
 
 		sfs.Output <- fl
@@ -224,7 +226,7 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 func getUDP(udpPtr unsafe.Pointer, length uint32, fl *netflow.Flow) error {
 	udp, err := packet.DecodeUDP(udpPtr, length)
 	if err != nil {
-		return fmt.Errorf("Unable to decode UDP datagram: %v", err)
+		return errors.Wrap(err, "Unable to decode UDP datagram")
 	}
 
 	fl.SrcPort = uint32(udp.SrcPort)
@@ -236,7 +238,7 @@ func getUDP(udpPtr unsafe.Pointer, length uint32, fl *netflow.Flow) error {
 func getTCP(tcpPtr unsafe.Pointer, length uint32, fl *netflow.Flow) error {
 	tcp, err := packet.DecodeTCP(tcpPtr, length)
 	if err != nil {
-		return fmt.Errorf("Unable to decode TCP segment: %v", err)
+		return errors.Wrap(err, "Unable to decode TCP segment")
 	}
 
 	fl.SrcPort = uint32(tcp.SrcPort)
