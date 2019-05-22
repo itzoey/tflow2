@@ -16,11 +16,11 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/golang/glog"
-
 	"github.com/bio-routing/tflow2/convert"
 	"github.com/bio-routing/tflow2/packet"
 	"github.com/bio-routing/tflow2/sflow"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func TestIntegration(t *testing.T) {
@@ -97,13 +97,13 @@ func TestIntegration(t *testing.T) {
 
 	for _, fs := range p.FlowSamples {
 		if fs.RawPacketHeader == nil {
-			glog.Infof("Received sflow packet without raw packet header. Skipped.")
+			log.Infof("Received sflow packet without raw packet header. Skipped.")
 			continue
 		}
 
-		ether, err := packet.DecodeEthernet(fs.RawPacketHeaderData, fs.RawPacketHeader.OriginalPacketLength)
+		ether, err := packet.DecodeEthernet(fs.Data, fs.RawPacketHeader.OriginalPacketLength)
 		if err != nil {
-			glog.Infof("Unable to decode ether packet: %v", err)
+			log.Infof("Unable to decode ether packet: %v", err)
 			continue
 		}
 
@@ -116,7 +116,7 @@ func TestIntegration(t *testing.T) {
 		}
 
 		if fs.RawPacketHeader.HeaderProtocol == 1 {
-			ipv4Ptr := unsafe.Pointer(uintptr(fs.RawPacketHeaderData) - packet.SizeOfEthernetII)
+			ipv4Ptr := unsafe.Pointer(uintptr(fs.Data) - packet.SizeOfEthernetII)
 			ipv4, err := packet.DecodeIPv4(ipv4Ptr, fs.RawPacketHeader.OriginalPacketLength-uint32(packet.SizeOfEthernetII))
 			if err != nil {
 				t.Errorf("Unable to decode IPv4 packet: %v", err)
