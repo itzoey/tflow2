@@ -39,6 +39,9 @@ const (
 var (
 	// SizeOfEthernetII is the size of an EthernetII header in bytes
 	SizeOfEthernetII = unsafe.Sizeof(ethernetII{})
+
+	// SizeOfDot1Q is the size of an dot1q header in bytes
+	SizeOfDot1Q = unsafe.Sizeof(Dot1Q{})
 )
 
 // EthernetHeader represents layer two IEEE 802.11
@@ -52,6 +55,12 @@ type ethernetII struct {
 	EtherType uint16
 	SrcMAC    [6]byte
 	DstMAC    [6]byte
+}
+
+// Dot1Q represents an IEEE 802.1q header
+type Dot1Q struct {
+	VID       uint16
+	EtherType uint16
 }
 
 // DecodeEthernet decodes an EthernetII header
@@ -76,4 +85,15 @@ func DecodeEthernet(raw unsafe.Pointer, length uint32) (*EthernetHeader, error) 
 	}
 
 	return h, nil
+}
+
+func DecodeDot1Q(raw unsafe.Pointer, length uint32) (*Dot1Q, error) {
+	if SizeOfDot1Q > uintptr(length) {
+		return nil, fmt.Errorf("Frame is too short: %d", length)
+	}
+
+	ptr := unsafe.Pointer(uintptr(raw) - SizeOfEthernetII)
+	dot1qHeader := (*Dot1Q)(ptr)
+
+	return dot1qHeader, nil
 }
