@@ -18,8 +18,8 @@ The release binaries have an additional command, `tflow2 -version`,
 which reports the release version.
 
 Once you start the main binary it will start reading netflow version 9 packets
-on port 2055 UDP and IPFIX packets on port 4739 on all interfaces.
-For user interaction it starts a webserver on port 4444 TCP on all interfaces. 
+on port `2055` UDP and IPFIX packets on port `4739` on all interfaces.
+For user interaction it starts a webserver on port `4444` TCP on all interfaces. 
 
 The webinterface allows you to run queries against the collected data.
 Start time and router are mandatory criteria. If you don't provide any of
@@ -27,7 +27,7 @@ these you will always receive an empty result.
 
 ### Config file
 
-There is YAML file as config. Defaults can be found in config.yml.example.
+There is YAML file as config. Defaults can be found in `config.yml.example`.
 You'll at least need to add your Netflow/IPFIX/Sflow agents and adjust (if you don't 
 want to work with interface IDs) your SNMP RO community.
 
