@@ -17,6 +17,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/bio-routing/tflow2/annotation"
 	"github.com/bio-routing/tflow2/config"
@@ -57,7 +58,7 @@ func main() {
 	// Initialize statistics module
 	stats.Init()
 
-	inftMapper, err := intfmapper.New(cfg.Agents, cfg.AggregationPeriod)
+	inftMapper, err := intfmapper.New(cfg.Agents, cfg.AggregationPeriod, time.Duration(cfg.InterfaceMapperRefreshPeriod)*time.Second)
 	if err != nil {
 		log.Errorf("Unable to initialize interface mappper: %v", err)
 		os.Exit(1)

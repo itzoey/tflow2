@@ -25,6 +25,7 @@ type IntfMapperInterface interface {
 type Mapper struct {
 	agents                     []config.Agent
 	renewInterval              int64
+	timeout                    time.Duration
 	interfaceIDByNameByAgent   map[string]InterfaceIDByName
 	interfaceNameByIDByAgent   map[string]InterfaceNameByID
 	interfaceIDByNameByAgentMu sync.RWMutex
@@ -38,10 +39,11 @@ type InterfaceIDByName map[string]uint16
 type InterfaceNameByID map[uint16]string
 
 // New creates a new Mapper and starts workers for all agents that periodicly renew interface mappings
-func New(agents []config.Agent, renewInterval int64) (*Mapper, error) {
+func New(agents []config.Agent, renewInterval int64, timeout time.Duration) (*Mapper, error) {
 	m := &Mapper{
 		agents:                   agents,
 		renewInterval:            renewInterval,
+		timeout:                  timeout,
 		interfaceIDByNameByAgent: make(map[string]InterfaceIDByName),
 		interfaceNameByIDByAgent: make(map[string]InterfaceNameByID),
 	}
@@ -65,7 +67,7 @@ func (m *Mapper) startRenewWorkers() {
 				time.Sleep(time.Second * time.Duration(m.renewInterval))
 				err := m.renewMapping(agent)
 				if err != nil {
-					log.Infof("Unable to renew interface mapping for %s: %v", agent.Name, err)
+					log.Warningf("Unable to renew interface mapping for %s: %v", agent.Name, err)
 				}
 			}
 		}(agent)
@@ -73,9 +75,12 @@ func (m *Mapper) startRenewWorkers() {
 }
 
 func (m *Mapper) renewMapping(a config.Agent) error {
-	snmpClient := g.Default
+	var snmpClient *g.GoSNMP
+	tmp := *g.Default
+	snmpClient = &tmp
 	snmpClient.Target = a.IPAddress
 	snmpClient.Community = a.SNMPCommunity
+	snmpClient.Timeout = m.timeout
 
 	if err := snmpClient.Connect(); err != nil {
 		return errors.Wrap(err, "SNMP client unable to connect")

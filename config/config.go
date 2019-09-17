@@ -9,13 +9,14 @@ import (
 
 // Config represents a yaml config file
 type Config struct {
-	AggregationPeriod    int64  `yaml:"aggregation_period"`
-	DefaultSNMPCommunity string `yaml:"default_snmp_community"`
-	Debug                int    `yaml:"debug"`
-	CompressionLevel     *int   `yaml:"compression_level"`
-	DataDir              string `yaml:"data_dir"`
-	Anonymize            bool   `yaml:"anonymize"`
-	CacheTime            *int64 `yaml:"cache_time"`
+	AggregationPeriod            int64  `yaml:"aggregation_period"`
+	DefaultSNMPCommunity         string `yaml:"default_snmp_community"`
+	InterfaceMapperRefreshPeriod int64  `yaml:"interface_mapper_refresh_period"`
+	Debug                        int    `yaml:"debug"`
+	CompressionLevel             *int   `yaml:"compression_level"`
+	DataDir                      string `yaml:"data_dir"`
+	Anonymize                    bool   `yaml:"anonymize"`
+	CacheTime                    *int64 `yaml:"cache_time"`
 
 	NetflowV9       *Server     `yaml:"netflow_v9"`
 	IPFIX           *Server     `yaml:"ipfix"`
@@ -56,12 +57,13 @@ type Agent struct {
 }
 
 var (
-	dfltAggregationPeriod    = int64(60)
-	dfltDefaultSNMPCommunity = "public"
-	dfltSampleRate           = uint64(1)
-	dfltCompressionLevel     = 6
-	dfltDataDir              = "data"
-	dfltCacheTime            = int64(1800)
+	dfltAggregationPeriod       = int64(60)
+	dftlIntfMapperRefreshPeriod = int64(30)
+	dfltDefaultSNMPCommunity    = "public"
+	dfltSampleRate              = uint64(1)
+	dfltCompressionLevel        = 6
+	dfltDataDir                 = "data"
+	dfltCacheTime               = int64(1800)
 
 	dfltNetflowV9Listen = ":2055"
 	dfltNetflowV9       = Server{
@@ -126,6 +128,9 @@ func New(filename string) (*Config, error) {
 func (cfg *Config) defaults() {
 	if cfg.AggregationPeriod == 0 {
 		cfg.AggregationPeriod = dfltAggregationPeriod
+	}
+	if cfg.InterfaceMapperRefreshPeriod == 0 {
+		cfg.InterfaceMapperRefreshPeriod = dftlIntfMapperRefreshPeriod
 	}
 	if cfg.DefaultSNMPCommunity == "" {
 		cfg.DefaultSNMPCommunity = dfltDefaultSNMPCommunity
