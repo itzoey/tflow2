@@ -167,6 +167,18 @@ func (sfs *SflowServer) processPacket(agent net.IP, buffer []byte) {
 		fl.NextHop = fs.ExtendedRouterData.NextHop
 
 		sfs.processEthernet(ether.EtherType, fs, fl)
+
+		if fl.Family >= 0 {
+			if fl.Family == 4 {
+				atomic.AddUint64(&stats.GlobalStats.Flows4, 1)
+			} else if fl.Family == 6 {
+				atomic.AddUint64(&stats.GlobalStats.Flows6, 1)
+			} else {
+				log.Warning("Unknown address family")
+				continue
+			}
+		}
+
 		sfs.Output <- fl
 	}
 }
