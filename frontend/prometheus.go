@@ -9,7 +9,7 @@ import (
 )
 
 func (fe *Frontend) prometheusHandler(w http.ResponseWriter, r *http.Request) {
-
+	fmt.Printf("r.URL.Query(): %s\n", r.URL.Query())
 	query, errors := fe.translateQuery(r.URL.Query())
 	if errors != nil {
 		http.Error(w, "Unable to parse query:", 422)
@@ -60,14 +60,26 @@ func (fe *Frontend) prometheusHandler(w http.ResponseWriter, r *http.Request) {
 	if len(result.TopKeys) > 0 {
 		for key := range result.TopKeys {
 			if _, ok := result.Data[ts][key]; ok {
-				fmt.Fprintf(w, "tflow_bytes{%s} %d\n", formatBreakdownKey(&key), result.Data[ts][key])
+				fmt.Fprintf(w, "tflow_bytes{agent=%q,%s} %d\n", getAgent(query), formatBreakdownKey(&key), result.Data[ts][key])
 			}
 		}
 	} else {
 		for key, val := range result.Data[ts] {
-			fmt.Fprintf(w, "tflow_bytes{%s} %d\n", formatBreakdownKey(&key), val)
+			fmt.Fprintf(w, "tflow_bytes{agent=%q,%s} %d\n", getAgent(query), formatBreakdownKey(&key), val)
 		}
 	}
+}
+
+func getAgent(q database.Query) string {
+	for _, c := range q.Cond {
+		if c.Field != database.FieldAgent {
+			continue
+		}
+
+		return string(c.Operand)
+	}
+
+	return ""
 }
 
 // formats a breakdown key for prometheus
