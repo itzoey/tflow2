@@ -44,11 +44,11 @@ func Decode(raw []byte, remote net.IP) (*Packet, error) {
 	data := convert.Reverse(raw) //TODO: Make it endian aware. This assumes a little endian machine
 
 	pSize := len(data)
-	bufSize := 1500
-	buffer := [1500]byte{}
+	bufSize := 9216
+	buffer := [9216]byte{}
 
 	if pSize > bufSize {
-		panic("Buffer too small\n")
+		panic(fmt.Sprintf("Buffer too small (%d/%d)", pSize, bufSize))
 	}
 
 	// copy data into array as arrays allow us to cast the shit out of it
