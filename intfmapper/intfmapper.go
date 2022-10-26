@@ -9,7 +9,7 @@ import (
 	"github.com/bio-routing/tflow2/config"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	g "github.com/soniah/gosnmp"
+	g "github.com/gosnmp/gosnmp"
 )
 
 const (
@@ -75,6 +75,7 @@ func (m *Mapper) startRenewWorkers() {
 }
 
 func (m *Mapper) renewMapping(a config.Agent) error {
+	return nil
 	var snmpClient *g.GoSNMP
 	tmp := *g.Default
 	snmpClient = &tmp

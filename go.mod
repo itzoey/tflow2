@@ -7,7 +7,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/common v0.7.0
 	github.com/sirupsen/logrus v1.4.2
-	github.com/soniah/gosnmp v0.0.0-20181018115632-28507a583d6f
+	github.com/gosnmp/gosnmp v0.0.0-20181018115632-28507a583d6f
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
 	google.golang.org/grpc v1.17.0
